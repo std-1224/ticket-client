@@ -6,7 +6,7 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -19,7 +19,7 @@ interface FormData {
   email: string
   password: string
   name: string
-  role: 'admin' | 'scanner' | 'buyer'
+  role: 'buyer'
 }
 
 export function CustomAuthForm() {
@@ -120,7 +120,7 @@ export function CustomAuthForm() {
     try {
       const { error } = await supabase
         .from('users')
-        .insert([
+        .upsert([
           {
             id: authUser.id,
             email: authUser.email,
@@ -128,7 +128,10 @@ export function CustomAuthForm() {
             role: role,
             created_at: new Date().toISOString()
           }
-        ])
+        ], {
+          onConflict: 'id',
+          ignoreDuplicates: false
+        })
 
       if (error) {
         console.error('Error saving user to database:', error)
@@ -146,7 +149,7 @@ export function CustomAuthForm() {
     setMessage(null)
 
     try {
-      await signInWithOAuth('google', `${process.env.NEXT_PUBLIC_REDIRECT_URL}/auth/callback`)
+      await signInWithOAuth('google', `${process.env.NEXT_PUBLIC_REDIRECT_URL}`)
       toast({
         title: "Redirigiendo a Google",
         description: "Serás redirigido para autenticarte con Google",
@@ -321,24 +324,7 @@ export function CustomAuthForm() {
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="signup-role">Rol</Label>
-                <Select
-                  value={signUpData.role}
-                  onValueChange={(value: 'admin' | 'scanner' | 'buyer') => 
-                    setSignUpData(prev => ({ ...prev, role: value }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona tu rol" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="buyer">Comprador</SelectItem>
-                    <SelectItem value="scanner">Escáner</SelectItem>
-                    <SelectItem value="admin">Administrador</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+
               
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
