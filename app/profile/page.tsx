@@ -24,6 +24,7 @@ interface UserProfile {
   role?: string
   email_verified: boolean
   is_active: boolean
+  balance?: number
   created_at: string
   updated_at: string
 }
@@ -308,7 +309,7 @@ export default function ProfilePage() {
 
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Account Information</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
@@ -324,6 +325,15 @@ export default function ProfilePage() {
                   <Badge variant={'default'}>
                     active
                   </Badge>
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  Account Balance
+                </Label>
+                <p className="text-sm font-semibold bg-green-900/20 border border-green-800 text-green-400 p-3 rounded-md">
+                  ${(profile.balance || 0).toFixed(2)}
                 </p>
               </div>
             </div>
