@@ -19,11 +19,11 @@ import { useAuth } from "@/contexts/auth-context"
 import { UserRoleBadge } from "./user-role-badge"
 
 const menuItems = [
-  {
-    title: "Home",
-    url: "/",
-    icon: Home,
-  },
+  // {
+  //   title: "Home",
+  //   url: "/",
+  //   icon: Home,
+  // },
   {
     title: "All Events",
     url: "/events",

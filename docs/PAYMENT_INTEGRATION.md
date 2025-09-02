@@ -41,7 +41,7 @@ CREATE TABLE tickets (
     status VARCHAR(20) DEFAULT 'pending',
     qr_code VARCHAR(255) UNIQUE NOT NULL,
     price_paid DECIMAL(10,2) NOT NULL,
-    purchased_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ```
 

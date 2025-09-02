@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/contexts/auth-context'
 import { useCreateTicket } from '@/hooks/use-events'
+import { useCart } from '@/contexts/cart-context'
 import { toast } from 'sonner'
 
 export default function PaymentSuccessPage() {
@@ -14,6 +15,7 @@ export default function PaymentSuccessPage() {
   const searchParams = useSearchParams()
   const { user } = useAuth()
   const { createTicket } = useCreateTicket()
+  const { clearCart } = useCart()
   const [isProcessing, setIsProcessing] = useState(true)
   const [success, setSuccess] = useState(false)
 
@@ -38,28 +40,15 @@ export default function PaymentSuccessPage() {
           return
         }
 
-        // Get the pending purchase ID from localStorage
-        const pendingPurchaseId = localStorage.getItem('pendingPurchaseId')
-        const cartItemsJson = localStorage.getItem('cartItems')
-
-        if (!pendingPurchaseId || !cartItemsJson) {
-          toast.error('Purchase information not found')
-          router.push('/cart')
-          return
-        }
-
         // Verify payment status with backend
         const response = await fetch(`/api/payment/webhook?id=${paymentId}`)
         const paymentData = await response.json()
 
         if (paymentData.data?.status === 'approved') {
-          // Payment was successful, tickets should already be updated by webhook
-          // Clear localStorage
-          localStorage.removeItem('pendingPurchaseId')
-          localStorage.removeItem('cartItems')
-
+          // Payment was successful, purchase and tickets should be created by webhook
           setSuccess(true)
-          toast.success('Payment successful! Your tickets are now available.')
+          clearCart() // Clear cart after successful payment
+          toast.success('Payment successful! Your tickets have been created and are now available.')
         } else {
           toast.error('Payment verification failed')
           router.push('/payment/failure')
@@ -75,7 +64,7 @@ export default function PaymentSuccessPage() {
     if (user) {
       processPayment()
     }
-  }, [user, paymentId, preferenceId, status, router, createTicket])
+  }, [user, paymentId, preferenceId, status, router, createTicket, clearCart])
 
   if (isProcessing) {
     return (

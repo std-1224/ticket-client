@@ -131,7 +131,7 @@ CREATE TABLE tickets (
 -- Tabla de transferencias de tickets
 CREATE TABLE ticket_transfers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    ticket_id UUID NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+    order_item_id UUID NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
     from_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     to_user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     to_email VARCHAR(255) NOT NULL,

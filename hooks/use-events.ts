@@ -77,7 +77,7 @@ export function useEvent(eventId: string) {
 }
 
 // Hook for managing ticket quantities
-export function useTicketQuantities(ticketTypes: any[] = []) {
+export function useTicketQuantities(ticketTypes: any[] = [], eventId?: string, cartItems: any[] = [], onQuantityChange?: (ticketId: string, newQuantity: number) => void) {
   const [quantities, setQuantities] = useState<Record<string, number>>({})
 
   // Create a stable reference for ticket type IDs
@@ -86,7 +86,7 @@ export function useTicketQuantities(ticketTypes: any[] = []) {
     [ticketTypes]
   )
 
-  // Initialize quantities when ticket types change
+  // Initialize quantities when ticket types change, syncing with cart items
   useEffect(() => {
     if (ticketTypes.length === 0) {
       setQuantities({})
@@ -94,18 +94,29 @@ export function useTicketQuantities(ticketTypes: any[] = []) {
     }
 
     const initialQuantities: Record<string, number> = {}
+
     ticketTypes.forEach(ticket => {
-      initialQuantities[ticket.id] = 0
+      // Check if this ticket type is already in the cart for this event
+      const cartItem = cartItems.find(item =>
+        item.eventId === eventId && item.ticketTypeId === ticket.id
+      )
+      initialQuantities[ticket.id] = cartItem ? cartItem.quantity : 0
     })
 
     setQuantities(initialQuantities)
-  }, [ticketTypeIds]) // Use stable reference
+  }, [ticketTypeIds, eventId, cartItems]) // Use stable reference, eventId, and cartItems
 
   const updateQuantity = (ticketId: string, change: number) => {
+    const newQuantity = Math.max(0, (quantities[ticketId] || 0) + change)
     setQuantities(prev => ({
       ...prev,
-      [ticketId]: Math.max(0, (prev[ticketId] || 0) + change)
+      [ticketId]: newQuantity
     }))
+
+    // Call the callback to update the cart in real-time
+    if (onQuantityChange) {
+      onQuantityChange(ticketId, newQuantity)
+    }
   }
 
   const setQuantity = (ticketId: string, quantity: number) => {
@@ -233,7 +244,7 @@ export function useTicket(ticketId: string) {
         setError(null)
 
         const { data, error } = await supabase
-          .from('tickets')
+          .from("order_items")
           .select(`
             *,
             ticket_types(*),

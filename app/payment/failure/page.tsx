@@ -17,10 +17,6 @@ export default function PaymentFailurePage() {
   const statusDetail = searchParams.get('status_detail')
 
   useEffect(() => {
-    // Clean up localStorage on payment failure
-    localStorage.removeItem('pendingOrderId')
-    localStorage.removeItem('cartItems')
-    
     toast.error('Payment failed. Please try again.')
   }, [])
 

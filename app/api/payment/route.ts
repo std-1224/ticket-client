@@ -1,36 +1,38 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { supabase } from '@/lib/supabase';
+import { supabase } from "@/lib/supabase";
+// import { v4 as uuidv4 } from 'uuid';
 
 export const POST = async (req: Request) => {
     try {
         const body = await req.json();
 
-        const { totalAmount, userId, payer, eventId, purchaseId } = body;
-
-        // Get the existing purchase record
-        const { data: purchase, error: purchaseError } = await supabase
-            .from("purchases")
-            .select("*")
-            .eq("id", purchaseId)
+        const { totalAmount, userId, payer, orderId } = body;
+        const { data: transaction, error } = await supabase.from("transactions").insert([
+            {
+                user_id: userId,
+                amount: totalAmount,
+                status: "pending",
+                order_id: orderId || null
+            }
+        ])
+            .select()
             .single();
-
-        if (purchaseError) {
-            console.error("Error fetching purchase:", purchaseError);
+        if (error) {
+            console.error("Error creating transaction:", error);
             return NextResponse.json(
                 {
-                    message: "Purchase not found",
-                    error: purchaseError.message,
+                    message: "An unexpected error occurred",
+                    error: error.message,
                 },
-                { status: 404 }
+                { status: 500 }
             );
         }
 
-        // Create MercadoPago preference
         const preferenceData = {
             items: [{
-                id: purchase.id,
-                title: "Event Tickets Purchase",
-                description: `Purchase of event tickets for ${totalAmount}`,
+                id: transaction.id,
+                title: "Charge your balance",
+                description: `Charge your balance with ${totalAmount} ARS`,
                 quantity: 1,
                 currency_id: 'ARS',
                 unit_price: totalAmount,
@@ -39,15 +41,18 @@ export const POST = async (req: Request) => {
                 email: payer.email,
                 name: payer.name || undefined,
             },
-            external_reference: purchase.id,
+            external_reference: transaction.id,
             back_urls: {
                 success: `${process.env.NEXT_PUBLIC_WEB_URL}/payment/success`,
                 failure: `${process.env.NEXT_PUBLIC_WEB_URL}/payment/failure`,
                 pending: `${process.env.NEXT_PUBLIC_WEB_URL}/payment/pending`,
             },
+            // Remove auto_return as it's causing issues
             notification_url: `${process.env.NEXT_PUBLIC_WEB_URL}/api/payment/webhook`,
-            statement_descriptor: 'Event Tickets'
+            statement_descriptor: 'Papel Restaurant'
         };
+
+        console.log('preference data ------>', preferenceData);
 
         const response = await fetch('https://api.mercadopago.com/checkout/preferences', {
             method: 'POST',
@@ -60,7 +65,7 @@ export const POST = async (req: Request) => {
 
         const mpResponse = await response.json();
         const resData = {
-            id: purchase.id,
+            id: mpResponse.id,
             status: 'pending',
             statusDetail: 'pending_payment',
             transactionAmount: totalAmount,
@@ -69,34 +74,47 @@ export const POST = async (req: Request) => {
             installments: 1,
             dateCreated: new Date().toISOString(),
             paymentUrl: mpResponse.init_point || ''
+            // paymentUrl: mpResponse.sandbox_init_point || '',
         };
+
+        const { data: transactionUpdate, error: transactionError } = await supabase.from("transactions")
+            .update({
+                payment_url: mpResponse.init_point || '',
+                // payment_url: mpResponse.sandbox_init_point || '',
+                preference_id: mpResponse.id,
+            })
+            .eq("id", transaction.id);
+
+        if (transactionError) {
+            console.error("Error updating transaction:", transactionError);
+            return NextResponse.json(
+                {
+                    message: "An unexpected error occurred",
+                    error: transactionError.message,
+                },
+                { status: 500 }
+            );
+        }
 
         return NextResponse.json({ data: resData, status: 200 });
     } catch (error: any) {
-        console.error('Error processing payment:', error.message);
+        console.error('Error creating user:', error.message);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 };
 
+
 export const GET = async (req: NextRequest) => {
     try {
         const { searchParams } = req.nextUrl;
-        const purchaseId = searchParams.get('purchaseId');
+        const eventId = searchParams.get('eventId');
 
-        if (!purchaseId) {
-            return NextResponse.json(
-                { message: "Purchase ID is required" },
-                { status: 400 }
-            );
-        }
-
-        const { data: purchase, error } = await supabase.from("purchases")
+        const { data: transaction, error } = await supabase.from("transactions")
             .select("*")
-            .eq("id", purchaseId)
+            .eq("order_id", eventId)
             .single();
-
         if (error) {
-            console.error("Error fetching purchase:", error);
+            console.error("Error creating transaction:", error);
             return NextResponse.json(
                 {
                     message: "An unexpected error occurred",
@@ -106,9 +124,11 @@ export const GET = async (req: NextRequest) => {
             );
         }
 
-        return NextResponse.json({ data: purchase, status: 200 });
+        return NextResponse.json({ data: transaction, status: 200 });
     } catch (error: any) {
-        console.error('Error fetching purchase:', error.message);
+        console.error('Error creating user:', error.message);
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 };
+
+

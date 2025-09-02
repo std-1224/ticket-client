@@ -1,14 +1,10 @@
 'use client'
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { MapPin, Calendar, Clock, Download } from "lucide-react"
-import Image from "next/image"
 import { useUserTickets } from "@/hooks/use-events"
-import { formatDate, formatTime, formatPrice } from "@/lib/api"
+import { formatDate } from "@/lib/api"
 import { useAuth } from "@/contexts/auth-context"
-import { QRCodeDisplay, downloadQRCode } from "@/components/qr-code"
 import Link from "next/link"
 
 export default function MyTicketsPage() {
@@ -75,102 +71,124 @@ export default function MyTicketsPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tickets.map((ticket) => (
-            <Card key={ticket.id} className="overflow-hidden bg-zinc-900/50 border-zinc-800">
-              <div className="relative h-64 w-full">
-                <Image
-                  src={ticket.events?.image_url || "/placeholder.svg?height=128&width=384"}
-                  alt={ticket.events?.title || "Event"}
-                  fill
-                  className="object-cover"
-                />
-                <div className="absolute top-2 right-2">
-                  <Badge
-                    variant={
-                      ticket.status === 'paid' ? 'secondary' :
-                      ticket.status === 'validated' ? 'secondary' :
-                      'outline'
-                    }
-                    className={
-                      ticket.status === 'paid' ? 'bg-lime-400/20 text-lime-400 border-lime-400/30' : ''
-                    }
-                  >
-                    {ticket.status.charAt(0).toUpperCase() + ticket.status.slice(1)}
-                  </Badge>
-                </div>
-              </div>
-
-              <CardHeader>
-                <CardTitle className="line-clamp-2">
-                  {ticket.events?.title}
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  {ticket.ticket_types?.name}
-                </p>
-              </CardHeader>
-
-              <CardContent>
-                <div className="space-y-2 text-sm mb-4">
+        <div className="space-y-4">
+          {tickets.map((order: any) => (
+            <Card key={order.id} className="bg-zinc-900/50 border-zinc-800">
+              <CardContent className="p-6">
+                {/* Header with Order ID and Date */}
+                <div className="flex justify-between items-start mb-6">
                   <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-primary" />
-                    <span>{ticket.events?.date ? formatDate(ticket.events.date) : 'TBD'}</span>
-                  </div>
-
-                  {ticket.events?.time && (
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-primary" />
-                      <span>{formatTime(ticket.events.time)}</span>
+                    <div className="w-4 h-4 rounded-full bg-zinc-600 flex items-center justify-center">
+                      <div className="w-2 h-2 rounded-full bg-white"></div>
                     </div>
-                  )}
-
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-primary" />
-                    <span className="line-clamp-1">{ticket.events?.location}</span>
+                    <h3 className="text-white font-medium">
+                      Order # {order.id.slice(-8)}
+                    </h3>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm text-gray-400">
+                      {new Date(order.created_at).toLocaleDateString()}
+                    </div>
                   </div>
                 </div>
 
-                <div className="border-t border-zinc-800 pt-4 space-y-2">
-                  {ticket.attendees && (
+                {/* Order Details Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  {/* Left Column */}
+                  <div className="space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Attendee</span>
-                      <span className="font-medium text-sm">{ticket.attendees.name}</span>
+                      <span className="text-gray-400">State:</span>
+                      <span className="text-white">{order.status}</span>
                     </div>
-                  )}
 
-                  <div className="flex justify-between">
-                    <span className="text-sm text-muted-foreground">Price Paid</span>
-                    <span className="font-bold">{formatPrice(ticket.price_paid)}</span>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Total:</span>
+                      <span className="text-white">
+                        ${(order.total_amount || order.total_price || 0).toLocaleString()}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">State:</span>
+                      <span className="text-white">{order.status}</span>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Validation:</span>
+                      <span className="text-white">
+                        {order.status === 'paid' || order.status === 'confirmed' ? 'Validated' : 'Pending'}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Payment method:</span>
+                      <span className="text-white">{order.payment_method || 'card'}</span>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">QR Code:</span>
+                      <span className="text-white text-xs font-mono">
+                        {order.qr_code || order.items?.[0]?.qr_code || 'N/A'}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="flex justify-between text-sm text-muted-foreground">
-                    <span>Purchased</span>
-                    <span>{new Date(ticket.purchased_at).toLocaleDateString()}</span>
+                  {/* Right Column */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Status:</span>
+                      <span className={`${
+                        ['paid', 'confirmed'].includes(order.status)
+                          ? 'text-lime-400'
+                          : order.status === 'waiting_payment'
+                            ? 'text-yellow-400'
+                            : 'text-gray-400'
+                      }`}>
+                        {order.status === 'waiting_payment' ? 'Waiting for Payment' :
+                         ['paid', 'confirmed'].includes(order.status) ? 'Paid' : order.status}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Event:</span>
+                      <span className="text-white text-right">
+                        {order.events?.title || 'Event'}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Date:</span>
+                      <span className="text-white">
+                        {order.events?.date ? formatDate(order.events.date) : 'TBD'}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Location:</span>
+                      <span className="text-white text-right">
+                        {order.events?.location || 'TBD'}
+                      </span>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">Tickets:</span>
+                      <span className="text-white">
+                        {order.items?.length || 0} ticket(s)
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="mt-4 space-y-2">
-                  <div className="flex items-center justify-center">
-                    <QRCodeDisplay
-                      value={ticket.qr_code}
-                      size={180}
-                      className="shadow-sm"
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Link href={`/tickets/${ticket.id}`} className="flex-1">
-                      <Button variant="outline" size="sm" className="w-full bg-transparent">
-                        View Details
-                      </Button>
-                    </Link>
+                {/* See Details Button */}
+                <div className="border-t border-zinc-800 pt-4">
+                  <Link href={`/confirmation?orderId=${order.id}`}>
                     <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => downloadQRCode(ticket.qr_code, `ticket-${ticket.id}.png`)}
+                      variant="outline"
+                      className="w-full bg-transparent border-zinc-700 text-white hover:bg-zinc-800"
                     >
-                      <Download className="h-4 w-4" />
+                      See details
                     </Button>
-                  </div>
+                  </Link>
                 </div>
               </CardContent>
             </Card>

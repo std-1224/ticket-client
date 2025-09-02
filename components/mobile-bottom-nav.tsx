@@ -6,11 +6,11 @@ import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 
 const menuItems = [
-  {
-    title: "Home",
-    url: "/",
-    icon: Home,
-  },
+  // {
+  //   title: "Home",
+  //   url: "/",
+  //   icon: Home,
+  // },
   {
     title: "Events",
     url: "/events",

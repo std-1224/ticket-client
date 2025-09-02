@@ -19,15 +19,41 @@ export default function EventDetailsPage() {
   const eventId = params.id as string
 
   const { user } = useAuth()
-  const { addToCart } = useCart()
+  const { replaceInCart, getTotalItems, items: cartItems, updateItemQuantity } = useCart()
   const { event, loading, error } = useEvent(eventId)
+
+  // Callback to update cart in real-time when quantities change
+  const handleQuantityChange = (ticketId: string, newQuantity: number) => {
+    const ticket = event?.ticket_types?.find(t => t.id === ticketId)
+    if (!ticket || !eventId) return
+
+    if (newQuantity === 0) {
+      // Remove from cart if quantity is 0
+      updateItemQuantity(eventId, ticketId, 0)
+    } else {
+      // Update or add to cart
+      const cartItem = {
+        eventId,
+        ticketTypeId: ticketId,
+        ticketTypeName: ticket.name,
+        price: ticket.price,
+        quantity: newQuantity,
+        eventTitle: event?.title || '',
+        eventDate: event?.date || '',
+        eventTime: event?.time || '',
+        eventLocation: event?.location || ''
+      }
+      updateItemQuantity(eventId, ticketId, newQuantity, cartItem)
+    }
+  }
+
   const {
     quantities,
     updateQuantity,
     getTotalQuantity,
     calculateTotal,
     getSelectedTickets
-  } = useTicketQuantities(event?.ticket_types || [])
+  } = useTicketQuantities(event?.ticket_types || [], eventId, cartItems, handleQuantityChange)
 
   const handleAddToCart = () => {
     if (!user) {
@@ -49,9 +75,9 @@ export default function EventDetailsPage() {
     }
 
     try {
-      // Add each selected ticket type to cart
+      // Replace each selected ticket type in cart (prevents duplication)
       selectedTickets.forEach(ticketType => {
-        addToCart({
+        replaceInCart({
           eventId: event.id,
           eventTitle: event.title,
           eventDate: event.date,
@@ -185,14 +211,18 @@ export default function EventDetailsPage() {
                   return (
                     <div key={ticket.id}>
                       <div className="flex justify-between items-center">
-                        <div>
-                          <h4 className="font-semibold">{ticket.name}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {formatPrice(ticket.price)}
-                          </p>
-                          {!isAvailable && (
-                            <p className="text-xs text-destructive">Sold Out</p>
-                          )}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3">
+                            <div>
+                              <h4 className="font-semibold">{ticket.name}</h4>
+                              <p className="text-sm text-muted-foreground">
+                                {formatPrice(ticket.price)}
+                              </p>
+                              {!isAvailable && (
+                                <p className="text-xs text-destructive">Sold Out</p>
+                              )}
+                            </div>
+                          </div>
                         </div>
                         <div className="flex items-center gap-2">
                           <Button
@@ -238,7 +268,7 @@ export default function EventDetailsPage() {
                 onClick={handleAddToCart}
               >
                 <ShoppingCart className="mr-2 h-5 w-5" />
-                Add to Cart ({getTotalQuantity()})
+                Add to Cart ({getTotalItems()})
               </Button>
             </CardFooter>
           </Card>
