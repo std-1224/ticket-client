@@ -24,9 +24,9 @@ export default function PaymentPendingPage() {
       const response = await fetch(`/api/payment/webhook?id=${paymentId}`)
       const paymentData = await response.json()
 
-      if (paymentData.data?.status === 'approved') {
-        toast.success('Payment approved! Redirecting...')
-        router.push(`/payment/success?payment_id=${paymentId}&status=approved`)
+      if (paymentData.data?.status === 'delivered') {
+        toast.success('Payment delivered! Redirecting...')
+        router.push(`/payment/success?payment_id=${paymentId}&status=delivered`)
       } else if (paymentData.data?.status === 'rejected') {
         toast.error('Payment was rejected')
         router.push(`/payment/failure?payment_id=${paymentId}&status=rejected`)
@@ -83,7 +83,7 @@ export default function PaymentPendingPage() {
               <h4 className="font-medium text-blue-900 mb-2">What happens next?</h4>
               <ul className="text-sm text-blue-800 space-y-1">
                 <li>• We're waiting for payment confirmation</li>
-                <li>• You'll receive an email once payment is approved</li>
+                <li>• You'll receive an email once payment is delivered</li>
                 <li>• Your tickets will be available immediately after approval</li>
                 <li>• This page will automatically update when status changes</li>
               </ul>

@@ -32,8 +32,8 @@ export default function PaymentSuccessPage() {
 
       try {
         // Check if payment was successful
-        if (status !== 'approved') {
-          toast.error('Payment was not approved')
+        if (status !== 'delivered') {
+          toast.error('Payment was not delivered')
           router.push('/payment/failure')
           return
         }
@@ -42,7 +42,7 @@ export default function PaymentSuccessPage() {
         const response = await fetch(`/api/payment/webhook?id=${paymentId}`)
         const paymentData = await response.json()
 
-        if (paymentData.data?.status === 'approved') {
+        if (paymentData.data?.status === 'delivered') {
           // Payment was successful, purchase and tickets should be created by webhook
           setSuccess(true)
           clearCart() // Clear cart after successful payment
@@ -100,7 +100,7 @@ export default function PaymentSuccessPage() {
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Status:</span>
-              <span className="font-medium text-green-600">Approved</span>
+              <span className="font-medium text-green-600">delivered</span>
             </div>
           </div>
         </CardContent>
