@@ -31,10 +31,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCart, type PaymentMethod } from "@/contexts/cart-context";
 import { useAuth } from "@/contexts/auth-context";
-import { useCreateTicket } from "@/hooks/use-events";
 import { apiClient, formatDate, formatTime, formatPrice } from "@/lib/api";
 import { toast } from "sonner";
-import { PaymentUrl } from "@/components/payment-url";
 
 export default function CartPage() {
   const router = useRouter();
@@ -51,7 +49,6 @@ export default function CartPage() {
     getTotalPrice,
     getTotalItems,
   } = useCart();
-  const { createTicket } = useCreateTicket();
   const [isProcessing, setIsProcessing] = useState(false);
 
   const [userBalance, setUserBalance] = useState<number>(0);

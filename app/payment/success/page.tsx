@@ -6,7 +6,6 @@ import { CheckCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/contexts/auth-context'
-import { useCreateTicket } from '@/hooks/use-events'
 import { useCart } from '@/contexts/cart-context'
 import { toast } from 'sonner'
 
@@ -14,7 +13,6 @@ export default function PaymentSuccessPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { user } = useAuth()
-  const { createTicket } = useCreateTicket()
   const { clearCart } = useCart()
   const [isProcessing, setIsProcessing] = useState(true)
   const [success, setSuccess] = useState(false)
@@ -64,7 +62,7 @@ export default function PaymentSuccessPage() {
     if (user) {
       processPayment()
     }
-  }, [user, paymentId, preferenceId, status, router, createTicket, clearCart])
+  }, [user, paymentId, preferenceId, status, router, clearCart])
 
   if (isProcessing) {
     return (

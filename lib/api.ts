@@ -98,7 +98,6 @@ export interface Ticket {
   qr_code: string;
   created_at: string;
   price_paid: number;
-  purchaser_id?: string;
   ticket_types?: TicketType;
   events?: Event;
   attendees?: Attendee;
@@ -328,73 +327,6 @@ class SupabaseApiClient {
     return { order: data as Order };
   }
 
-  async createTicket(ticketData: {
-    ticket_type_id: string;
-    event_id: string;
-    price_paid: number;
-    purchaser_id?: string;
-    status?: "pending" | "paid" | "validated";
-  }): Promise<{ ticket: Ticket }> {
-    // Generate QR code using the provided function
-    const qr_code = generateQRCode();
-
-    const { data, error } = await supabase
-      .from("order_items")
-      .insert([
-        {
-          ...ticketData,
-          qr_code,
-          status: ticketData.status || "pending",
-          created_at: new Date().toISOString(),
-          scanned_at: null,
-        },
-      ])
-      .select(
-        `
-        *,
-        ticket_types(*),
-        events(*),
-        attendees(*)
-      `
-      )
-      .single();
-
-    if (error) {
-      handleSupabaseError(error);
-    }
-
-    return { ticket: data as Ticket };
-  }
-
-  async createTicketsForPurchase(
-    ticketsData: Array<{
-      ticket_type_id: string;
-      event_id: string;
-      price_paid: number;
-      purchaser_id?: string;
-      quantity: number;
-    }>
-  ): Promise<{ tickets: Ticket[] }> {
-    const allTickets: Ticket[] = [];
-
-    for (const ticketData of ticketsData) {
-      const ticketPromises = Array.from({ length: ticketData.quantity }, () =>
-        this.createTicket({
-          ticket_type_id: ticketData.ticket_type_id,
-          event_id: ticketData.event_id,
-          price_paid: ticketData.price_paid,
-          purchaser_id: ticketData.purchaser_id,
-          status: "pending",
-        })
-      );
-
-      const tickets = await Promise.all(ticketPromises);
-      allorder_items.push(...order_items.map((t) => t.ticket));
-    }
-
-    return { tickets: allTickets };
-  }
-
   // Attendee methods
   async getAttendeesForPurchase(
     purchaseId: string
@@ -410,7 +342,7 @@ class SupabaseApiClient {
         )
       `
       )
-      .eq("order_items.purchase_id", purchaseId);
+      .eq("order_items.order_id", purchaseId);
 
     if (error) {
       handleSupabaseError(error);

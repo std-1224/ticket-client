@@ -195,40 +195,6 @@ export function useUserTickets() {
   }
 }
 
-// Hook for creating tickets
-export function useCreateTicket() {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const createTicket = async (ticketData: {
-    order_id?: string
-    ticket_type_id: string
-    purchaser_id: string
-    event_id: string
-    price_paid: number
-    status?: 'pending' | 'paid' | 'active' | 'used' | 'cancelled' | 'transferred'
-  }) => {
-    try {
-      setLoading(true)
-      setError(null)
-      const response = await apiClient.createTicket(ticketData)
-      return response.ticket
-    } catch (err: any) {
-      setError(err.message || 'Failed to create ticket')
-      console.error('Error creating ticket:', err)
-      throw err
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return {
-    createTicket,
-    loading,
-    error
-  }
-}
-
 // Hook for fetching a single ticket
 export function useTicket(ticketId: string) {
   const [ticket, setTicket] = useState<any>(null)
