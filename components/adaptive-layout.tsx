@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useAuth } from "@/contexts/auth-context"
+import { usePathname } from "next/navigation"
 import { AppSidebar } from "./app-sidebar"
 import { MobileBottomNav } from "./mobile-bottom-nav"
 import { GuestHeader } from "./guest-header"
@@ -13,6 +14,10 @@ interface AdaptiveLayoutProps {
 
 export function AdaptiveLayout({ children }: AdaptiveLayoutProps) {
   const { user, loading } = useAuth()
+  const pathname = usePathname()
+
+  // Check if current page should not show sidebar
+  const isFullScreenPage = pathname === '/access-denied' || pathname === '/auth'
 
   // Mostrar un loading state mientras se determina el estado de autenticación
   if (loading) {
@@ -29,6 +34,15 @@ export function AdaptiveLayout({ children }: AdaptiveLayoutProps) {
       <div className="min-h-screen bg-background text-foreground">
         <GuestHeader />
         <main className="flex-1">{children}</main>
+      </div>
+    )
+  }
+
+  // Layout para páginas de pantalla completa (sin sidebar)
+  if (isFullScreenPage) {
+    return (
+      <div className="min-h-screen bg-background text-foreground">
+        {children}
       </div>
     )
   }

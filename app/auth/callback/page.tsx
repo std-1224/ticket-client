@@ -62,8 +62,36 @@ export default async function AuthCallbackPage({
         console.error("Unexpected error saving user:", err);
       }
 
-      // Redirect to the main dashboard
-      redirect("/");
+      // Check user role from database to get the most up-to-date role
+      try {
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', data.user.id)
+          .single()
+
+        if (userError) {
+          console.error('Error fetching user role:', userError)
+          redirect(`/auth?error=${encodeURIComponent('Failed to verify user permissions')}`)
+        }
+
+        const userRole = userData?.role || 'buyer'
+        console.log('User role:', userRole)
+
+        // Check if user has buyer role (only buyers allowed in client app)
+        if (userRole === 'admin' || userRole === 'scanner') {
+          console.log('Access denied - user role is:', userRole)
+          // Sign out the user and redirect to auth with error message
+          await supabase.auth.signOut()
+          redirect(`/auth?error=${encodeURIComponent('Access denied. This application is for customers only. Please use the admin panel for administrative access.')}`)
+        }
+
+        // Redirect to the main page for authorized users (buyers)
+        redirect("/")
+      } catch (err) {
+        console.error('Unexpected error checking user role:', err)
+        redirect(`/auth?error=${encodeURIComponent('Failed to verify user permissions')}`)
+      }
     }
   }
 

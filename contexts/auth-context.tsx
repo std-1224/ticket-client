@@ -123,8 +123,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
-  // Get user role and full name from metadata
-  const userRole = user?.user_metadata?.role || user?.app_metadata?.role || null
+  // Get user role from database (will be fetched by AuthGuard)
+  // For now, we'll use metadata as fallback but AuthGuard will handle the real role checking
+  const userRole = user?.user_metadata?.role || user?.app_metadata?.role || 'buyer'
   const userFullName = user?.user_metadata?.full_name || user?.user_metadata?.name || null
 
   // Helper functions for role checking
