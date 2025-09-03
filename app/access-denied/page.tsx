@@ -61,14 +61,6 @@ export default function AccessDeniedPage() {
             
             <div className="space-y-3">
               <Button 
-                onClick={handleGoToAdmin}
-                className="w-full"
-              >
-                <Settings className="h-4 w-4 mr-2" />
-                Go to Admin Panel
-              </Button>
-              
-              <Button 
                 onClick={handleGoBack}
                 variant="outline" 
                 className="w-full"
