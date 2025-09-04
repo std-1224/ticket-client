@@ -57,7 +57,8 @@ export async function POST(request: NextRequest) {
         price_paid: item.price,
         amount: item.quantity,
         user_id: userId,
-        transferred_to_email
+        transferred_to_email,
+        status: 'waiting_payment'
       }));
       const { data: orderItems, error: orderItemsError } = await supabase
         .from("order_items")
